@@ -1,9 +1,3 @@
-# Railway deployment config.
-#
-# - Builder: Dockerfile (so we can install ffmpeg)
-# - Volume: /data — persistent SQLite + per-job media folder
-# - Restart policy: ON_FAILURE (retries 3x)
-# - Healthcheck: /api/health
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
