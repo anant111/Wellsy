@@ -11,9 +11,11 @@ import uuid
 from contextlib import contextmanager
 from typing import Optional, Tuple
 
-# Resolve paths relative to the project root
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+# Resolve paths relative to the project root.
+# On Railway (and other deploy targets), override with $DATA_DIR so SQLite +
+# per-job media live on the persistent volume instead of /app.
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(_PROJECT_ROOT, "data"))
 DB_PATH = os.path.join(DATA_DIR, "jobs.db")
 JOBS_CACHE_DIR = os.path.join(DATA_DIR, "jobs")  # one subfolder per job
 

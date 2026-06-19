@@ -37,10 +37,17 @@ log = logging.getLogger("server")
 
 app = FastAPI(title="AI Video Pipeline", version="0.1.0")
 
-# CORS — local Next.js dev server
+# CORS — local dev + deployed Vercel frontends.
+# Vercel gives every deploy a unique URL under vercel.app; the patterns below
+# cover the production alias + all preview deploys.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://wellsy.vercel.app",
+    ],
+    allow_origin_regex=r"https://wellsy(-git-[a-z0-9-]+)?(-[a-z0-9-]+)?\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
