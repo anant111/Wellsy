@@ -34,8 +34,9 @@ ENV PYTHONUNBUFFERED=1
 # directory inside the image so the mount has a target.
 RUN mkdir -p /data
 
-# Use exec form (no /bin/sh -c wrapping) and call uvicorn directly. The
-# exec form lets Railway's container runtime exec the binary cleanly.
-# PORT is injected by Railway; defaults to 8080.
+# Use a small /bin/sh entrypoint so we can:
+#   - handle $PORT (Railway injects it; exec form doesn't expand env vars)
+#   - exec uvicorn as PID 1 so SIGTERM (Railway shutdown) reaches the app
+# The CMD below uses exec form pointing at the entrypoint script.
 WORKDIR /app/ai_video_pipeline/web/server
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["/bin/sh", "/app/ai_video_pipeline/web/server/start.sh"]
