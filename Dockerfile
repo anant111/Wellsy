@@ -28,9 +28,11 @@ COPY . /app/ai_video_pipeline/
 ENV PYTHONPATH=/app/ai_video_pipeline:/app/ai_video_pipeline/web/server
 ENV PYTHONUNBUFFERED=1
 
-# Persistent volume for SQLite + per-job media. Railway auto-creates this if
-# declared in railway.json's volumes section. Locally this just becomes a dir.
-VOLUME ["/data"]
+# Persistent volume for SQLite + per-job media is mounted by Railway at the
+# service level (UI > Settings > Volumes > Mount Path: /data). Railway's
+# builder rejects VOLUME directives in Dockerfiles, so we just create the
+# directory inside the image so the mount has a target.
+RUN mkdir -p /data
 
 # Run uvicorn. The $PORT env var is set by Railway (default 8080).
 CMD ["sh", "-c", "cd /app/ai_video_pipeline/web/server && uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]
