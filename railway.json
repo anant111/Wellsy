@@ -1,0 +1,20 @@
+# Railway deployment config.
+#
+# - Builder: Dockerfile (so we can install ffmpeg)
+# - Volume: /data — persistent SQLite + per-job media folder
+# - Restart policy: ON_FAILURE (retries 3x)
+# - Healthcheck: /api/health
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "cd /app/ai_video_pipeline/web/server && uvicorn server:app --host 0.0.0.0 --port $PORT",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
