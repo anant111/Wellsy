@@ -34,5 +34,8 @@ ENV PYTHONUNBUFFERED=1
 # directory inside the image so the mount has a target.
 RUN mkdir -p /data
 
-# Run uvicorn. The $PORT env var is set by Railway (default 8080).
-CMD ["sh", "-c", "cd /app/ai_video_pipeline/web/server && uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]
+# Use exec form (no /bin/sh -c wrapping) and call uvicorn directly. The
+# exec form lets Railway's container runtime exec the binary cleanly.
+# PORT is injected by Railway; defaults to 8080.
+WORKDIR /app/ai_video_pipeline/web/server
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
