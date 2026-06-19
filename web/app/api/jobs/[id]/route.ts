@@ -1,0 +1,19 @@
+import { NextResponse } from "next/server";
+
+const PY = process.env.PY_BACKEND ?? "http://127.0.0.1:8765";
+
+export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const r = await fetch(`${PY}/api/jobs/${params.id}`, { cache: "no-store" });
+  return new NextResponse(r.body, {
+    status: r.status,
+    headers: { "content-type": r.headers.get("content-type") ?? "application/json" },
+  });
+}
+
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const r = await fetch(`${PY}/api/jobs/${params.id}`, { method: "DELETE" });
+  return new NextResponse(r.body, {
+    status: r.status,
+    headers: { "content-type": r.headers.get("content-type") ?? "application/json" },
+  });
+}

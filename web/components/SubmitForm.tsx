@@ -1,0 +1,160 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { createJob } from "@/lib/api";
+import {
+  ASPECT_MODES,
+  DURATIONS,
+  LANGUAGES,
+  ORIENTATIONS,
+  STYLES,
+  type AspectMode,
+  type Language,
+} from "@/lib/types";
+
+/** Heuristic: if the prompt contains Devanagari script, default to Hindi. */
+function looksHindi(text: string): boolean {
+  return /[ऀ-ॿ]/.test(text);
+}
+
+export function SubmitForm() {
+  const router = useRouter();
+  const [prompt, setPrompt] = useState("");
+  const [duration, setDuration] = useState<number>(15);
+  const [orientation, setOrientation] = useState<"16:9" | "9:16">("9:16");
+  const [style, setStyle] = useState<string>("cinematic");
+  const [language, setLanguage] = useState<Language>("en");
+  const [aspectMode, setAspectMode] = useState<AspectMode>("single");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function handlePromptChange(v: string) {
+    setPrompt(v);
+    // Auto-flip language to Hindi the moment the user types Devanagari.
+    if (looksHindi(v) && language === "en") {
+      setLanguage("hi");
+    }
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!prompt.trim()) {
+      setError("Prompt is required");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { id } = await createJob({
+        prompt: prompt.trim(),
+        duration,
+        orientation,
+        style,
+        language,
+        aspect_mode: aspectMode,
+      });
+      router.push(`/jobs/${id}`);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5 max-w-2xl">
+      <div>
+        <label className="block text-sm font-medium mb-1.5">Prompt</label>
+        <textarea
+          value={prompt}
+          onChange={(e) => handlePromptChange(e.target.value)}
+          rows={4}
+          placeholder={
+            language === "hi"
+              ? "उदा. भारतीय शेयर बाज़ार के लिए 30 सेकंड का रील"
+              : "e.g. Promote noise-cancelling headphones for remote workers"
+          }
+          className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:border-accent"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Duration</label>
+          <select
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm"
+          >
+            {DURATIONS.map((d) => (
+              <option key={d} value={d}>{d}s</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Aspect</label>
+          <select
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value as "16:9" | "9:16")}
+            className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm"
+          >
+            {ORIENTATIONS.map((o) => (
+              <option key={o} value={o}>{o === "16:9" ? "16:9 (YouTube)" : "9:16 (Reel)"}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Language</label>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Language)}
+            className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l} value={l}>{l === "en" ? "English" : "हिन्दी (Hindi)"}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Style</label>
+          <select
+            value={style}
+            onChange={(e) => setStyle(e.target.value)}
+            className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm capitalize"
+          >
+            {STYLES.map((s) => (
+              <option key={s} value={s} className="capitalize">{s}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Variants</label>
+          <select
+            value={aspectMode}
+            onChange={(e) => setAspectMode(e.target.value as AspectMode)}
+            className="w-full rounded-md bg-bg border border-border px-3 py-2 text-sm"
+          >
+            {ASPECT_MODES.map((a) => (
+              <option key={a.value} value={a.value}>{a.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted">
+        Audio is generated by Veo natively (supports Hindi). Default audience is
+        India — examples, references, and pacing will be tuned accordingly.
+      </p>
+
+      {error && <p className="text-sm text-rose-400">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="bg-accent hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-md disabled:opacity-50"
+      >
+        {busy ? "Starting…" : "Generate"}
+      </button>
+    </form>
+  );
+}
